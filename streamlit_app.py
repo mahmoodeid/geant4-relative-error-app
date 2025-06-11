@@ -36,28 +36,27 @@ def get_number_of_runs(macro_content: str) -> int:
 @st.cache_data
 def parse_output(output_content: str) -> pd.DataFrame:
     df_raw = pd.read_csv(
-        StringIO(output_content), delim_whitespace=True,
-        header=None, comment='#', engine='python'
+        StringIO(output_content),
+        delim_whitespace=True,
+        header=None,
+        comment='#',
+        engine='python'
     )
     # Split first column by commas
     df_split = df_raw[0].str.split(",", expand=True)
     df_split.columns = ["i", "j", "k", "total_val", "total_val_sq", "entries"]
-    df_split[["total_val", "total_val_sq", "entries"]] = df_split[["total_val", "total_val_sq", "entries"]].astype(float)
+    df_split[["total_val", "total_val_sq", "entries"]] = \
+        df_split[["total_val", "total_val_sq", "entries"]].astype(float)
     return df_split
 
 # Color function for relative error
-
 def color_error(val):
-    try:
-        if val < 15:
-            color = '#a8e6a3'  # green
-        elif val < 30:
-            color = '#ffd59e'  # orange
-        else:
-            color = '#f28c8c'  # red
-    except:
-        color = ''
-    return f'background-color: {color}'
+    if val < 15:
+        return 'background-color: #a8e6a3'  # green
+    elif val < 30:
+        return 'background-color: #ffd59e'  # orange
+    else:
+        return 'background-color: #f28c8c'  # red
 
 # Main execution: display table when both files are uploaded
 if output_file and macro_file:
@@ -79,16 +78,19 @@ if output_file and macro_file:
         stderr = np.sqrt(np.clip(variance / n_runs, 0, None))
         df['rel_err_%'] = (stderr / df['mean']).replace([np.inf, -np.inf], 0).fillna(0) * 100
 
-        # Prepare display
+        # Prepare display DataFrame
         display_df = df[["i", "j", "k", "total_val", "mean", "rel_err_%"]].rename(
             columns={
-                "i": "Bin i", "j": "Bin j", "k": "Bin k",
-                "total_val": "Total Value", "mean": "Mean",
+                "i": "Bin i",
+                "j": "Bin j",
+                "k": "Bin k",
+                "total_val": "Total Value",
+                "mean": "Mean",
                 "rel_err_%": "Relative Error (%)"
             }
         )
 
-        # Apply formatting and coloring
+        # Style: scientific notation + coloring + large font
         styled = (
             display_df.style
                 .format({
@@ -97,10 +99,11 @@ if output_file and macro_file:
                     "Relative Error (%)": "{:.2f}"
                 })
                 .applymap(color_error, subset=["Relative Error (%)"])
-                .set_properties(**{'font-size': '24px', 'text-align': 'center'})
+                .set_properties(**{"font-size": "32px", "text-align": "center"})
         )
 
         st.markdown("### Results Table")
         st.dataframe(styled, use_container_width=True)
+
 else:
     st.info("Please upload both a Geant4 output file and a macro file to proceed.")
