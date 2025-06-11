@@ -36,13 +36,17 @@ def get_number_of_runs(macro_content: str) -> int:
 @st.cache_data
 def parse_output(output_content: str) -> pd.DataFrame:
     df_raw = pd.read_csv(
-        StringIO(output_content), delim_whitespace=True,
-        header=None, comment='#', engine='python'
+        StringIO(output_content),
+        delim_whitespace=True,
+        header=None,
+        comment='#',
+        engine='python'
     )
     # Split first column by commas
     df_split = df_raw[0].str.split(",", expand=True)
     df_split.columns = ["i", "j", "k", "total_val", "total_val_sq", "entries"]
-    df_split[["total_val", "total_val_sq", "entries"]] = df_split[["total_val", "total_val_sq", "entries"]].astype(float)
+    df_split[["total_val", "total_val_sq", "entries"]] = \
+        df_split[["total_val", "total_val_sq", "entries"]].astype(float)
     return df_split
 
 # Main execution: display table when both files are uploaded
@@ -65,34 +69,17 @@ if output_file and macro_file:
         stderr = np.sqrt(np.clip(variance / n_runs, 0, None))
         df['rel_err_%'] = (stderr / df['mean']).replace([np.inf, -np.inf], 0).fillna(0) * 100
 
-        # Prepare display
-        display_df = df[["i", "j", "k", "total_val", "mean", "rel_err_%"]].rename(
-            columns={
-                "i": "Bin i", "j": "Bin j", "k": "Bin k",
-                "total_val": "Total Value", "mean": "Mean",
-                "rel_err_%": "Relative Error (%)"
-            }
-        )
+        # Prepare display dataframe
+        display_df = df[["i", "j", "k", "total_val", "mean", "rel_err_%"]].copy()
+        display_df.columns = ["Bin i", "Bin j", "Bin k", "Total Value", "Mean", "Relative Error (%)"]
 
-        # Large-font styling
-        st.markdown(
-            """
-            <style>
-            .dataframe td { font-size: 18px; }
-            .dataframe th { font-size: 20px; }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
+        # Format numeric columns: scientific for Total Value and Mean, two decimals for Relative Error
+        display_df["Total Value"] = display_df["Total Value"].apply(lambda x: f"{x:.2e}")
+        display_df["Mean"] = display_df["Mean"].apply(lambda x: f"{x:.2e}")
+        display_df["Relative Error (%)"] = display_df["Relative Error (%)"].apply(lambda x: f"{x:.2f}")
 
-        # Format scientific notation for Total Value and Mean
-        styled_df = display_df.style.format({
-            "Total Value": "{:.2e}",
-            "Mean": "{:.2e}",
-            "Relative Error (%)": "{:.2f}"
-        })
-
+        # Display table
         st.markdown("### Results Table")
-        st.dataframe(styled_df, use_container_width=True)
+        st.dataframe(display_df, use_container_width=True)
 else:
     st.info("Please upload both a Geant4 output file and a macro file to proceed.")
