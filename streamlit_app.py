@@ -74,15 +74,6 @@ if output_file and macro_file:
             }
         )
 
-        # Format scientific for Total Value and Mean, percent for error
-        styled = display_df.style.format(
-            {
-                "Total Value": "{:.3e}",
-                "Mean": "{:.3e}",
-                "Relative Error (%)": "{:.2f}"
-            }
-        )
-
         # Large-font styling
         st.markdown(
             """
@@ -94,7 +85,14 @@ if output_file and macro_file:
             unsafe_allow_html=True
         )
 
+        # Format scientific notation for Total Value and Mean
+        styled_df = display_df.style.format({
+            "Total Value": "{:.2e}",
+            "Mean": "{:.2e}",
+            "Relative Error (%)": "{:.2f}"
+        })
+
         st.markdown("### Results Table")
-        st.dataframe(styled, use_container_width=True)
+        st.dataframe(styled_df, use_container_width=True)
 else:
     st.info("Please upload both a Geant4 output file and a macro file to proceed.")
