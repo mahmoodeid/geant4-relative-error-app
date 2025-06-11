@@ -74,6 +74,15 @@ if output_file and macro_file:
             }
         )
 
+        # Format scientific for Total Value and Mean, percent for error
+        styled = display_df.style.format(
+            {
+                "Total Value": "{:.3e}",
+                "Mean": "{:.3e}",
+                "Relative Error (%)": "{:.2f}"
+            }
+        )
+
         # Large-font styling
         st.markdown(
             """
@@ -86,6 +95,6 @@ if output_file and macro_file:
         )
 
         st.markdown("### Results Table")
-        st.dataframe(display_df, use_container_width=True)
+        st.dataframe(styled, use_container_width=True)
 else:
     st.info("Please upload both a Geant4 output file and a macro file to proceed.")
